@@ -792,7 +792,8 @@ values
 on conflict (id) do nothing;
 
 update storage.buckets
-set public = true
+set public = true,
+    file_size_limit = 209715200
 where id in (
   'staff-cv',
   'staff-images',
