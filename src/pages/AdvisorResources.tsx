@@ -26,7 +26,7 @@ import { supabaseResourcesFilesBucket } from '../lib/supabase';
 const SECTIONS = [
   { id: 'academic_advising', label: 'Academic advising' },
   { id: 'registration', label: 'Registration' },
-  { id: 'scheduler', label: 'Schedules' }
+  { id: 'schedules', label: 'Schedules' }
 ] as const;
 
 type SectionId = (typeof SECTIONS)[number]['id'];
@@ -53,7 +53,7 @@ function initialDrafts(): Record<SectionId, SectionDraft> {
   return {
     academic_advising: emptyDraft(),
     registration: emptyDraft(),
-    scheduler: emptyDraft()
+    schedules: emptyDraft()
   };
 }
 
@@ -66,18 +66,6 @@ function normalizeHttpUrl(raw: string): string {
     return t;
   }
   return `https://${t}`;
-}
-
-function parseSectionTitle(title: string): { sectionId: SectionId | null; shortLabel: string } {
-  const m = title.match(/^\[(academic_advising|registration|scheduler)\]\s*(.+)$/i);
-  if (!m) {
-    return { sectionId: null, shortLabel: title };
-  }
-  return { sectionId: m[1] as SectionId, shortLabel: m[2] };
-}
-
-function titlePrefix(sectionId: SectionId): string {
-  return `[${sectionId}]`;
 }
 
 export function AdvisorResources() {
@@ -123,8 +111,7 @@ export function AdvisorResources() {
   }
 
   const sectionRecords = useMemo(() => {
-    const prefix = titlePrefix(activeSection);
-    return records.filter((r) => r.title.startsWith(prefix));
+    return records.filter((r) => r.section === activeSection);
   }, [records, activeSection]);
 
   const totalPages = Math.max(1, Math.ceil(sectionRecords.length / ITEMS_PER_PAGE));
@@ -141,7 +128,6 @@ export function AdvisorResources() {
   async function handleSaveSection(): Promise<void> {
     const d = drafts[activeSection];
     const desc = d.sourceOfLink.trim() || '';
-    const prefix = titlePrefix(activeSection);
 
     const hasPdf = Boolean(d.pdfFile);
     const hasPhotoOnly = Boolean(d.photoFile) && !d.videoUrl.trim();
@@ -156,13 +142,12 @@ export function AdvisorResources() {
     setIsSaving(true);
     setSubmitError('');
 
-    const description = desc || undefined;
-
     try {
       if (hasPdf && d.pdfFile) {
         const input: AdvisorResourceInput = {
-          title: `${prefix} PDF`,
+          title: 'PDF',
           description: desc,
+          section: activeSection,
           resourceType: 'file',
           resourceUrl: '',
           duration: ''
@@ -172,8 +157,9 @@ export function AdvisorResources() {
 
       if (d.photoFile && !hasVideo) {
         const input: AdvisorResourceInput = {
-          title: `${prefix} Photo`,
+          title: 'Photo',
           description: desc,
+          section: activeSection,
           resourceType: 'file',
           resourceUrl: '',
           duration: ''
@@ -184,8 +170,9 @@ export function AdvisorResources() {
       if (hasVideo) {
         const url = normalizeHttpUrl(d.videoUrl);
         const input: AdvisorResourceInput = {
-          title: `${prefix} Video`,
+          title: 'Video',
           description: desc,
+          section: activeSection,
           resourceType: 'video',
           resourceUrl: url,
           duration: ''
@@ -197,8 +184,9 @@ export function AdvisorResources() {
       if (hasLink) {
         const url = normalizeHttpUrl(d.linkUrl);
         const input: AdvisorResourceInput = {
-          title: `${prefix} Link`,
+          title: 'Link',
           description: desc,
+          section: activeSection,
           resourceType: 'link',
           resourceUrl: url,
           duration: ''
@@ -380,7 +368,6 @@ export function AdvisorResources() {
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {paginatedRecords.map((record) => {
-                  const { shortLabel } = parseSectionTitle(record.title);
                   const fileUrl = getPublicFileUrl(supabaseResourcesFilesBucket, record.file_path);
                   const thumbnailUrl = getPublicFileUrl(supabaseResourcesFilesBucket, record.thumbnail_path);
                   const actionUrl = record.resource_type === 'file' ? fileUrl : record.resource_url;
@@ -401,7 +388,7 @@ export function AdvisorResources() {
                           </div>
 
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-must-text-primary truncate">{shortLabel}</h3>
+                            <h3 className="font-semibold text-must-text-primary truncate">{record.title}</h3>
                             {record.description ? (
                               <p className="text-xs text-must-text-secondary mt-1 line-clamp-3">
                                 <span className="font-medium text-must-text-primary">Source: </span>

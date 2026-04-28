@@ -3,32 +3,19 @@ import { Card, CardHeader, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { ImagePlusIcon, FileTextIcon, MegaphoneIcon, RotateCcwIcon, XIcon } from 'lucide-react';
+import {
+  createAnnouncement,
+  listAnnouncements,
+  type AnnouncementInput,
+  type AnnouncementViewModel
+} from '../services/announcementsService';
 
 const DEFAULT_ANNOUNCEMENT_PHOTO = '/must-announcement-default.png';
-
-function readFileAsDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(new Error('Failed to read file'));
-    reader.readAsDataURL(file);
-  });
-}
 
 interface AttachedPreview {
   id: string;
   file: File;
   url: string;
-}
-
-interface PublishedAnnouncement {
-  id: string;
-  title: string;
-  description: string;
-  date: string;
-  mainImageSrc: string;
-  attachmentSrcs: string[];
-  pdfName?: string;
 }
 
 function todayInputValue(): string {
@@ -46,7 +33,8 @@ export function Announcements() {
   const [mainPhotoFile, setMainPhotoFile] = useState<File | null>(null);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [attached, setAttached] = useState<AttachedPreview[]>([]);
-  const [published, setPublished] = useState<PublishedAnnouncement[]>([]);
+  const [published, setPublished] = useState<AnnouncementViewModel[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
 
@@ -68,6 +56,25 @@ export function Announcements() {
   const mainPhotoInputRef = useRef<HTMLInputElement>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    void loadAnnouncements();
+  }, []);
+
+  async function loadAnnouncements(): Promise<void> {
+    try {
+      setIsLoading(true);
+      const data = await listAnnouncements();
+      setPublished(data);
+    } catch (error) {
+      setFeedback({
+        type: 'err',
+        text: error instanceof Error ? error.message : 'Failed to load announcements.'
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   const addAttachments = useCallback((fileList: FileList | null) => {
     if (!fileList?.length) {
@@ -128,27 +135,26 @@ export function Announcements() {
 
     setIsSubmitting(true);
     try {
-      const mainImageSrc = mainPhotoFile
-        ? await readFileAsDataUrl(mainPhotoFile)
-        : DEFAULT_ANNOUNCEMENT_PHOTO;
-
-      const attachmentSrcs = await Promise.all(attached.map((a) => readFileAsDataUrl(a.file)));
-
-      const entry: PublishedAnnouncement = {
-        id: crypto.randomUUID(),
+      const input: AnnouncementInput = {
         title: title.trim(),
         description: description.trim(),
-        date,
-        mainImageSrc,
-        attachmentSrcs,
-        pdfName: pdfFile?.name
+        announcementDate: date
       };
 
-      setPublished((prev) => [entry, ...prev]);
+      await createAnnouncement(input, {
+        mainPhotoFile,
+        pdfFile,
+        attachmentFiles: attached.map((item) => item.file)
+      });
+
       resetForm();
-      setFeedback({ type: 'ok', text: 'Announcement saved locally (connect a backend to persist).' });
-    } catch {
-      setFeedback({ type: 'err', text: 'Could not read one of the files. Try smaller images or a different PDF.' });
+      await loadAnnouncements();
+      setFeedback({ type: 'ok', text: 'Announcement saved successfully.' });
+    } catch (error) {
+      setFeedback({
+        type: 'err',
+        text: error instanceof Error ? error.message : 'Failed to save announcement.'
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -319,22 +325,32 @@ export function Announcements() {
         </Card>
       </div>
 
-      {published.length > 0 && (
+      {isLoading ? (
+        <Card>
+          <CardContent className="p-6 text-sm text-must-text-secondary">Loading announcements...</CardContent>
+        </Card>
+      ) : null}
+
+      {!isLoading && published.length > 0 ? (
         <div className="space-y-3">
-          <h2 className="text-lg font-semibold text-must-text-primary">Recently published (this session)</h2>
+          <h2 className="text-lg font-semibold text-must-text-primary">Published announcements</h2>
           <div className="grid gap-4 md:grid-cols-2">
             {published.map((p) => (
               <Card key={p.id}>
                 <CardContent className="p-4 flex gap-3">
-                  <img src={p.mainImageSrc} alt="" className="w-20 h-20 object-contain rounded-lg border border-must-border bg-white shrink-0" />
+                  <img
+                    src={p.mainImageUrl ?? DEFAULT_ANNOUNCEMENT_PHOTO}
+                    alt=""
+                    className="w-20 h-20 object-contain rounded-lg border border-must-border bg-white shrink-0"
+                  />
                   <div className="min-w-0">
                     <h3 className="font-semibold text-must-text-primary truncate">{p.title}</h3>
-                    <p className="text-xs text-must-text-secondary mt-1">{p.date}</p>
+                    <p className="text-xs text-must-text-secondary mt-1">{p.announcement_date}</p>
                     <p className="text-sm text-must-text-secondary line-clamp-2 mt-1">{p.description}</p>
-                    {p.pdfName && <p className="text-xs text-must-text-secondary mt-1">PDF: {p.pdfName}</p>}
-                    {p.attachmentSrcs.length > 0 && (
+                    {p.pdfUrl && <p className="text-xs text-must-text-secondary mt-1">PDF attached</p>}
+                    {p.attachmentImageUrls.length > 0 && (
                       <div className="flex gap-1 mt-2 overflow-x-auto">
-                        {p.attachmentSrcs.map((src, i) => (
+                        {p.attachmentImageUrls.map((src, i) => (
                           <img key={i} src={src} alt="" className="w-10 h-10 object-cover rounded border border-must-border shrink-0" />
                         ))}
                       </div>
@@ -345,7 +361,7 @@ export function Announcements() {
             ))}
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

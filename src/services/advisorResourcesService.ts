@@ -13,11 +13,14 @@ import {
 
 export const advisorResourceTypes = ['file', 'video', 'link'] as const;
 export type AdvisorResourceType = (typeof advisorResourceTypes)[number];
+export const advisorResourceSections = ['academic_advising', 'registration', 'schedules'] as const;
+export type AdvisorResourceSection = (typeof advisorResourceSections)[number];
 
 export interface AdvisorResourceRecord {
   id: string;
   title: string;
   description: string | null;
+  section: AdvisorResourceSection;
   resource_type: AdvisorResourceType;
   resource_url: string | null;
   file_path: string | null;
@@ -30,6 +33,7 @@ export interface AdvisorResourceRecord {
 export interface AdvisorResourceInput {
   title: string;
   description: string;
+  section: AdvisorResourceSection;
   resourceType: AdvisorResourceType;
   resourceUrl: string;
   duration: string;
@@ -58,6 +62,10 @@ const THUMBNAIL_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 function assertInput(input: AdvisorResourceInput): void {
   if (!input.title.trim()) {
     throw new Error('Title is required.');
+  }
+
+  if (!advisorResourceSections.includes(input.section)) {
+    throw new Error('Please select a valid advising resource section.');
   }
 
   if (!advisorResourceTypes.includes(input.resourceType)) {
@@ -152,6 +160,7 @@ export async function createAdvisorResource(
     id,
     title: input.title.trim(),
     description: input.description.trim() || null,
+    section: input.section,
     resource_type: input.resourceType,
     resource_url: resourceUrl,
     file_path: filePath,
@@ -236,6 +245,7 @@ export async function updateAdvisorResource(
     .update({
       title: input.title.trim(),
       description: input.description.trim() || null,
+      section: input.section,
       resource_type: input.resourceType,
       resource_url: nextResourceUrl,
       file_path: nextFilePath,

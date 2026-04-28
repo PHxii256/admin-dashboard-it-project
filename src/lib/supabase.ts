@@ -25,6 +25,8 @@ export const supabaseGalleryTable =
   import.meta.env.VITE_SUPABASE_GALLERY_TABLE || 'photo_gallery';
 export const supabaseAdvisorResourcesTable =
   import.meta.env.VITE_SUPABASE_ADVISOR_RESOURCES_TABLE || 'advisor_resources';
+export const supabaseAnnouncementsTable =
+  import.meta.env.VITE_SUPABASE_ANNOUNCEMENTS_TABLE || 'announcements';
 export const supabaseAcademicAdvisingTable =
   import.meta.env.VITE_SUPABASE_ACADEMIC_ADVISING_TABLE || 'academic_advising';
 export const supabaseRegistrationVideosTable =

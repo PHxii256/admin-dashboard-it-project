@@ -145,10 +145,25 @@ create table if not exists public.photo_gallery (
   constraint photo_gallery_image_url_not_blank check (length(trim(image_url)) > 0)
 );
 
+create table if not exists public.announcements (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  description text not null,
+  announcement_date date not null,
+  main_image_path text,
+  attachment_image_paths text[] not null default '{}',
+  pdf_path text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint announcements_title_not_blank check (length(trim(title)) > 0),
+  constraint announcements_description_not_blank check (length(trim(description)) > 0)
+);
+
 create table if not exists public.advisor_resources (
   id uuid primary key default gen_random_uuid(),
   title text not null,
   description text,
+  section text not null default 'academic_advising',
   resource_type text not null,
   resource_url text,
   file_path text,
@@ -157,6 +172,7 @@ create table if not exists public.advisor_resources (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint advisor_resources_title_not_blank check (length(trim(title)) > 0),
+  constraint advisor_resources_section_valid check (section in ('academic_advising', 'registration', 'schedules')),
   constraint advisor_resources_type_valid check (resource_type in ('file', 'video', 'link')),
   constraint advisor_resources_url_format check (resource_url is null or resource_url ~* '^https?://'),
   constraint advisor_resources_data_shape check (
@@ -276,6 +292,9 @@ where image_url is not null
   and (image_urls is null or cardinality(image_urls) = 0);
 
 alter table if exists public.advisor_resources
+add column if not exists section text;
+
+alter table if exists public.advisor_resources
 add column if not exists description text;
 
 alter table if exists public.advisor_resources
@@ -283,6 +302,37 @@ add column if not exists duration text;
 
 alter table if exists public.advisor_resources
 add column if not exists thumbnail_path text;
+
+update public.advisor_resources
+set section = case
+  when title ~* '^\[academic_advising\]' then 'academic_advising'
+  when title ~* '^\[registration\]' then 'registration'
+  when title ~* '^\[(scheduler|schedules)\]' then 'schedules'
+  when section is not null then section
+  else 'academic_advising'
+end
+where section is null;
+
+update public.advisor_resources
+set title = regexp_replace(title, '^\[(academic_advising|registration|scheduler|schedules)\]\s*', '', 'i')
+where title ~* '^\[(academic_advising|registration|scheduler|schedules)\]';
+
+update public.advisor_resources
+set section = 'schedules'
+where section = 'scheduler';
+
+alter table public.advisor_resources
+alter column section set default 'academic_advising';
+
+alter table public.advisor_resources
+alter column section set not null;
+
+alter table public.advisor_resources
+drop constraint if exists advisor_resources_section_valid;
+
+alter table public.advisor_resources
+add constraint advisor_resources_section_valid
+check (section in ('academic_advising', 'registration', 'schedules'));
 
 alter table if exists public.student_resources
 add column if not exists description text;
@@ -381,6 +431,12 @@ before update on public.photo_gallery
 for each row
 execute function public.set_updated_at_column();
 
+drop trigger if exists trg_announcements_set_updated_at on public.announcements;
+create trigger trg_announcements_set_updated_at
+before update on public.announcements
+for each row
+execute function public.set_updated_at_column();
+
 drop trigger if exists trg_advisor_resources_set_updated_at on public.advisor_resources;
 create trigger trg_advisor_resources_set_updated_at
 before update on public.advisor_resources
@@ -412,6 +468,7 @@ alter table public.schedules enable row level security;
 alter table public.calendars enable row level security;
 alter table public.activities enable row level security;
 alter table public.photo_gallery enable row level security;
+alter table public.announcements enable row level security;
 alter table public.advisor_resources enable row level security;
 alter table public.student_resources enable row level security;
 alter table public.students enable row level security;
@@ -545,6 +602,22 @@ for update to authenticated using (true) with check (true);
 drop policy if exists photo_gallery_delete_authenticated on public.photo_gallery;
 create policy photo_gallery_delete_authenticated on public.photo_gallery
 for delete to authenticated using (true);
+
+drop policy if exists announcements_select_anon on public.announcements;
+create policy announcements_select_anon on public.announcements
+for select to anon using (true);
+
+drop policy if exists announcements_insert_anon on public.announcements;
+create policy announcements_insert_anon on public.announcements
+for insert to anon with check (true);
+
+drop policy if exists announcements_update_anon on public.announcements;
+create policy announcements_update_anon on public.announcements
+for update to anon using (true) with check (true);
+
+drop policy if exists announcements_delete_anon on public.announcements;
+create policy announcements_delete_anon on public.announcements
+for delete to anon using (true);
 
 drop policy if exists advisor_resources_select_anon on public.advisor_resources;
 create policy advisor_resources_select_anon on public.advisor_resources
@@ -709,7 +782,13 @@ values
   ('calendar-files', 'calendar-files', true),
   ('activity-images', 'activity-images', true),
   ('gallery-images', 'gallery-images', true),
-  ('resources-files', 'resources-files', true)
+  ('resources-files', 'resources-files', true),
+  ('facilities-images', 'facilities-images', true),
+  ('home-images', 'home-images', true),
+  ('home-files', 'home-files', true),
+  ('important-links-images', 'important-links-images', true),
+  ('admission-files', 'admission-files', true),
+  ('international-handbook-files', 'international-handbook-files', true)
 on conflict (id) do nothing;
 
 update storage.buckets
@@ -725,6 +804,12 @@ where id in (
   'activity-images',
   'gallery-images',
   'resources-files',
+  'facilities-images',
+  'home-images',
+  'home-files',
+  'important-links-images',
+  'admission-files',
+  'international-handbook-files',
   'advisor-avatars'
 );
 
@@ -744,6 +829,12 @@ using (
     'activity-images',
     'gallery-images',
     'resources-files',
+    'facilities-images',
+    'home-images',
+    'home-files',
+    'important-links-images',
+    'admission-files',
+    'international-handbook-files',
     'advisor-avatars'
   )
 );
@@ -764,9 +855,153 @@ using (
     'activity-images',
     'gallery-images',
     'resources-files',
+    'facilities-images',
+    'home-images',
+    'home-files',
+    'important-links-images',
+    'admission-files',
+    'international-handbook-files',
     'advisor-avatars'
   )
 );
+
+drop policy if exists storage_facilities_images_insert_authenticated on storage.objects;
+create policy storage_facilities_images_insert_authenticated
+on storage.objects
+for insert to authenticated
+with check (
+  bucket_id = 'facilities-images'
+  and (metadata->>'mimetype') in ('image/jpeg', 'image/png', 'image/webp')
+  and coalesce((metadata->>'size')::bigint, 0) <= 8 * 1024 * 1024
+  and name ~ '^facilities/.+/.+'
+);
+
+drop policy if exists storage_facilities_images_select_authenticated on storage.objects;
+create policy storage_facilities_images_select_authenticated
+on storage.objects
+for select to authenticated
+using (bucket_id = 'facilities-images');
+
+drop policy if exists storage_facilities_images_delete_authenticated on storage.objects;
+create policy storage_facilities_images_delete_authenticated
+on storage.objects
+for delete to authenticated
+using (bucket_id = 'facilities-images');
+
+drop policy if exists storage_home_images_insert_authenticated on storage.objects;
+create policy storage_home_images_insert_authenticated
+on storage.objects
+for insert to authenticated
+with check (
+  bucket_id = 'home-images'
+  and (metadata->>'mimetype') in ('image/jpeg', 'image/png', 'image/webp')
+  and coalesce((metadata->>'size')::bigint, 0) <= 8 * 1024 * 1024
+  and name ~ '^home/.+/.+'
+);
+
+drop policy if exists storage_home_images_select_authenticated on storage.objects;
+create policy storage_home_images_select_authenticated
+on storage.objects
+for select to authenticated
+using (bucket_id = 'home-images');
+
+drop policy if exists storage_home_images_delete_authenticated on storage.objects;
+create policy storage_home_images_delete_authenticated
+on storage.objects
+for delete to authenticated
+using (bucket_id = 'home-images');
+
+drop policy if exists storage_home_files_insert_authenticated on storage.objects;
+create policy storage_home_files_insert_authenticated
+on storage.objects
+for insert to authenticated
+with check (
+  bucket_id = 'home-files'
+  and (metadata->>'mimetype') in ('application/pdf')
+  and coalesce((metadata->>'size')::bigint, 0) <= 20 * 1024 * 1024
+  and name ~ '^home/.+/.+'
+);
+
+drop policy if exists storage_home_files_select_authenticated on storage.objects;
+create policy storage_home_files_select_authenticated
+on storage.objects
+for select to authenticated
+using (bucket_id = 'home-files');
+
+drop policy if exists storage_home_files_delete_authenticated on storage.objects;
+create policy storage_home_files_delete_authenticated
+on storage.objects
+for delete to authenticated
+using (bucket_id = 'home-files');
+
+drop policy if exists storage_important_links_images_insert_authenticated on storage.objects;
+create policy storage_important_links_images_insert_authenticated
+on storage.objects
+for insert to authenticated
+with check (
+  bucket_id = 'important-links-images'
+  and (metadata->>'mimetype') in ('image/jpeg', 'image/png', 'image/webp')
+  and coalesce((metadata->>'size')::bigint, 0) <= 8 * 1024 * 1024
+  and name ~ '^important-links/.+/.+'
+);
+
+drop policy if exists storage_important_links_images_select_authenticated on storage.objects;
+create policy storage_important_links_images_select_authenticated
+on storage.objects
+for select to authenticated
+using (bucket_id = 'important-links-images');
+
+drop policy if exists storage_important_links_images_delete_authenticated on storage.objects;
+create policy storage_important_links_images_delete_authenticated
+on storage.objects
+for delete to authenticated
+using (bucket_id = 'important-links-images');
+
+drop policy if exists storage_admission_files_insert_authenticated on storage.objects;
+create policy storage_admission_files_insert_authenticated
+on storage.objects
+for insert to authenticated
+with check (
+  bucket_id = 'admission-files'
+  and (metadata->>'mimetype') in ('image/jpeg', 'image/png', 'image/webp', 'application/pdf')
+  and coalesce((metadata->>'size')::bigint, 0) <= 10 * 1024 * 1024
+  and name ~ '^admission/.+/.+'
+);
+
+drop policy if exists storage_admission_files_select_authenticated on storage.objects;
+create policy storage_admission_files_select_authenticated
+on storage.objects
+for select to authenticated
+using (bucket_id = 'admission-files');
+
+drop policy if exists storage_admission_files_delete_authenticated on storage.objects;
+create policy storage_admission_files_delete_authenticated
+on storage.objects
+for delete to authenticated
+using (bucket_id = 'admission-files');
+
+drop policy if exists storage_international_handbook_files_insert_authenticated on storage.objects;
+create policy storage_international_handbook_files_insert_authenticated
+on storage.objects
+for insert to authenticated
+with check (
+  bucket_id = 'international-handbook-files'
+  and (metadata->>'mimetype') in ('application/pdf')
+  and coalesce((metadata->>'size')::bigint, 0) <= 20 * 1024 * 1024
+  and name ~ '^international-handbook/.+/.+'
+);
+
+drop policy if exists storage_international_handbook_files_select_authenticated on storage.objects;
+create policy storage_international_handbook_files_select_authenticated
+on storage.objects
+for select to authenticated
+using (bucket_id = 'international-handbook-files');
+
+drop policy if exists storage_international_handbook_files_delete_authenticated on storage.objects;
+create policy storage_international_handbook_files_delete_authenticated
+on storage.objects
+for delete to authenticated
+using (bucket_id = 'international-handbook-files');
 
 -- Storage upload policies with server-side mime/size checks.
 drop policy if exists storage_news_images_insert_anon on storage.objects;
@@ -1637,6 +1872,22 @@ drop policy if exists activities_delete_authenticated on public.activities;
 create policy activities_delete_authenticated on public.activities
 for delete to authenticated using (true);
 
+drop policy if exists announcements_select_authenticated on public.announcements;
+create policy announcements_select_authenticated on public.announcements
+for select to authenticated using (true);
+
+drop policy if exists announcements_insert_authenticated on public.announcements;
+create policy announcements_insert_authenticated on public.announcements
+for insert to authenticated with check (true);
+
+drop policy if exists announcements_update_authenticated on public.announcements;
+create policy announcements_update_authenticated on public.announcements
+for update to authenticated using (true) with check (true);
+
+drop policy if exists announcements_delete_authenticated on public.announcements;
+create policy announcements_delete_authenticated on public.announcements
+for delete to authenticated using (true);
+
 drop policy if exists advisor_resources_select_authenticated on public.advisor_resources;
 create policy advisor_resources_select_authenticated on public.advisor_resources
 for select to authenticated using (true);
@@ -1904,6 +2155,64 @@ create policy storage_resources_files_delete_authenticated
 on storage.objects
 for delete to authenticated
 using (bucket_id = 'resources-files');
+
+drop policy if exists storage_announcements_insert_anon on storage.objects;
+create policy storage_announcements_insert_anon
+on storage.objects
+for insert to anon
+with check (
+  bucket_id = 'resources-files'
+  and (metadata->>'mimetype') in ('application/pdf', 'image/jpeg', 'image/png', 'image/webp')
+  and coalesce((metadata->>'size')::bigint, 0) <= 25 * 1024 * 1024
+  and name ~ '^announcements/.+/.+'
+);
+
+drop policy if exists storage_announcements_select_anon on storage.objects;
+create policy storage_announcements_select_anon
+on storage.objects
+for select to anon
+using (
+  bucket_id = 'resources-files'
+  and name ~ '^announcements/.+/.+'
+);
+
+drop policy if exists storage_announcements_delete_anon on storage.objects;
+create policy storage_announcements_delete_anon
+on storage.objects
+for delete to anon
+using (
+  bucket_id = 'resources-files'
+  and name ~ '^announcements/.+/.+'
+);
+
+drop policy if exists storage_announcements_insert_authenticated on storage.objects;
+create policy storage_announcements_insert_authenticated
+on storage.objects
+for insert to authenticated
+with check (
+  bucket_id = 'resources-files'
+  and (metadata->>'mimetype') in ('application/pdf', 'image/jpeg', 'image/png', 'image/webp')
+  and coalesce((metadata->>'size')::bigint, 0) <= 25 * 1024 * 1024
+  and name ~ '^announcements/.+/.+'
+);
+
+drop policy if exists storage_announcements_select_authenticated on storage.objects;
+create policy storage_announcements_select_authenticated
+on storage.objects
+for select to authenticated
+using (
+  bucket_id = 'resources-files'
+  and name ~ '^announcements/.+/.+'
+);
+
+drop policy if exists storage_announcements_delete_authenticated on storage.objects;
+create policy storage_announcements_delete_authenticated
+on storage.objects
+for delete to authenticated
+using (
+  bucket_id = 'resources-files'
+  and name ~ '^announcements/.+/.+'
+);
 
 create table if not exists public.academic_advising (
   id uuid primary key default gen_random_uuid(),
