@@ -64,7 +64,7 @@ for insert to anon
 with check (
   bucket_id = 'resources-files'
   and (metadata->>'mimetype') in ('application/pdf')
-  and coalesce((metadata->>'size')::bigint, 0) <= 20 * 1024 * 1024
+  and coalesce((metadata->>'size')::bigint, 0) <= 200 * 1024 * 1024
   and name ~ '^honor-list-resources/.+/.+'
 );
 
@@ -93,7 +93,7 @@ for insert to authenticated
 with check (
   bucket_id = 'resources-files'
   and (metadata->>'mimetype') in ('application/pdf')
-  and coalesce((metadata->>'size')::bigint, 0) <= 20 * 1024 * 1024
+  and coalesce((metadata->>'size')::bigint, 0) <= 200 * 1024 * 1024
   and name ~ '^honor-list-resources/.+/.+'
 );
 

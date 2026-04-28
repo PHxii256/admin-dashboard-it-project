@@ -105,7 +105,7 @@ for insert to anon
 with check (
   bucket_id = 'resources-files'
   and (metadata->>'mimetype') in ('application/pdf', 'image/jpeg', 'image/png', 'image/webp')
-  and coalesce((metadata->>'size')::bigint, 0) <= 25 * 1024 * 1024
+  and coalesce((metadata->>'size')::bigint, 0) <= 200 * 1024 * 1024
   and name ~ '^announcements/.+/.+'
 );
 
@@ -134,7 +134,7 @@ for insert to authenticated
 with check (
   bucket_id = 'resources-files'
   and (metadata->>'mimetype') in ('application/pdf', 'image/jpeg', 'image/png', 'image/webp')
-  and coalesce((metadata->>'size')::bigint, 0) <= 25 * 1024 * 1024
+  and coalesce((metadata->>'size')::bigint, 0) <= 200 * 1024 * 1024
   and name ~ '^announcements/.+/.+'
 );
 

@@ -73,7 +73,7 @@ with check (
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     'text/plain'
   )
-  and coalesce((metadata->>'size')::bigint, 0) <= 25 * 1024 * 1024
+  and coalesce((metadata->>'size')::bigint, 0) <= 200 * 1024 * 1024
   and name ~ '^academic-advising/.+/.+'
 );
 
@@ -111,7 +111,7 @@ with check (
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     'text/plain'
   )
-  and coalesce((metadata->>'size')::bigint, 0) <= 25 * 1024 * 1024
+  and coalesce((metadata->>'size')::bigint, 0) <= 200 * 1024 * 1024
   and name ~ '^academic-advising/.+/.+'
 );
 

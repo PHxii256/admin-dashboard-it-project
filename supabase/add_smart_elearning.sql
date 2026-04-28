@@ -72,7 +72,7 @@ for insert to anon
 with check (
   bucket_id = 'resources-files'
   and (metadata->>'mimetype') in ('video/mp4', 'video/webm', 'video/quicktime')
-  and coalesce((metadata->>'size')::bigint, 0) <= 150 * 1024 * 1024
+  and coalesce((metadata->>'size')::bigint, 0) <= 200 * 1024 * 1024
   and name ~ '^smart-elearning/.+/.+'
 );
 
@@ -101,7 +101,7 @@ for insert to authenticated
 with check (
   bucket_id = 'resources-files'
   and (metadata->>'mimetype') in ('video/mp4', 'video/webm', 'video/quicktime')
-  and coalesce((metadata->>'size')::bigint, 0) <= 150 * 1024 * 1024
+  and coalesce((metadata->>'size')::bigint, 0) <= 200 * 1024 * 1024
   and name ~ '^smart-elearning/.+/.+'
 );
 

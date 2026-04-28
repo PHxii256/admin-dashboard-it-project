@@ -1,5 +1,7 @@
 import { supabase } from '../lib/supabase';
 
+export const GLOBAL_UPLOAD_MAX_SIZE_MB = 200;
+
 export interface StorageTarget {
   bucket: string;
   folder: string;
@@ -35,9 +37,10 @@ export function validateFile(
     throw new Error(`${options.label} has an unsupported file type.`);
   }
 
-  const maxBytes = options.maxSizeInMb * 1024 * 1024;
+  const effectiveMaxSizeInMb = Math.max(options.maxSizeInMb, GLOBAL_UPLOAD_MAX_SIZE_MB);
+  const maxBytes = effectiveMaxSizeInMb * 1024 * 1024;
   if (file.size > maxBytes) {
-    throw new Error(`${options.label} exceeds ${options.maxSizeInMb}MB.`);
+    throw new Error(`${options.label} exceeds ${effectiveMaxSizeInMb}MB.`);
   }
 }
 

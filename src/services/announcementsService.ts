@@ -13,6 +13,7 @@ import {
 
 const ANNOUNCEMENT_IMAGE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const ANNOUNCEMENT_PDF_MIME_TYPES = ['application/pdf'];
+const ANNOUNCEMENT_UPLOAD_MAX_SIZE_MB = 200;
 
 export interface AnnouncementRecord {
   id: string;
@@ -44,7 +45,7 @@ function isMissingAnnouncementsTable(error: { code?: string; message?: string })
 
 function validateAnnouncementImage(file: File, label: string): void {
   validateFile(file, {
-    maxSizeInMb: 8,
+    maxSizeInMb: ANNOUNCEMENT_UPLOAD_MAX_SIZE_MB,
     allowedMimeTypes: ANNOUNCEMENT_IMAGE_MIME_TYPES,
     label
   });
@@ -52,7 +53,7 @@ function validateAnnouncementImage(file: File, label: string): void {
 
 function validateAnnouncementPdf(file: File): void {
   validateFile(file, {
-    maxSizeInMb: 25,
+    maxSizeInMb: ANNOUNCEMENT_UPLOAD_MAX_SIZE_MB,
     allowedMimeTypes: ANNOUNCEMENT_PDF_MIME_TYPES,
     label: 'Announcement PDF'
   });

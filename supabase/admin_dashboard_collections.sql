@@ -872,7 +872,7 @@ for insert to authenticated
 with check (
   bucket_id = 'facilities-images'
   and (metadata->>'mimetype') in ('image/jpeg', 'image/png', 'image/webp')
-  and coalesce((metadata->>'size')::bigint, 0) <= 8 * 1024 * 1024
+  and coalesce((metadata->>'size')::bigint, 0) <= 200 * 1024 * 1024
   and name ~ '^facilities/.+/.+'
 );
 
@@ -895,7 +895,7 @@ for insert to authenticated
 with check (
   bucket_id = 'home-images'
   and (metadata->>'mimetype') in ('image/jpeg', 'image/png', 'image/webp')
-  and coalesce((metadata->>'size')::bigint, 0) <= 8 * 1024 * 1024
+  and coalesce((metadata->>'size')::bigint, 0) <= 200 * 1024 * 1024
   and name ~ '^home/.+/.+'
 );
 
@@ -918,7 +918,7 @@ for insert to authenticated
 with check (
   bucket_id = 'home-files'
   and (metadata->>'mimetype') in ('application/pdf')
-  and coalesce((metadata->>'size')::bigint, 0) <= 20 * 1024 * 1024
+  and coalesce((metadata->>'size')::bigint, 0) <= 200 * 1024 * 1024
   and name ~ '^home/.+/.+'
 );
 
@@ -941,7 +941,7 @@ for insert to authenticated
 with check (
   bucket_id = 'important-links-images'
   and (metadata->>'mimetype') in ('image/jpeg', 'image/png', 'image/webp')
-  and coalesce((metadata->>'size')::bigint, 0) <= 8 * 1024 * 1024
+  and coalesce((metadata->>'size')::bigint, 0) <= 200 * 1024 * 1024
   and name ~ '^important-links/.+/.+'
 );
 
@@ -964,7 +964,7 @@ for insert to authenticated
 with check (
   bucket_id = 'admission-files'
   and (metadata->>'mimetype') in ('image/jpeg', 'image/png', 'image/webp', 'application/pdf')
-  and coalesce((metadata->>'size')::bigint, 0) <= 10 * 1024 * 1024
+  and coalesce((metadata->>'size')::bigint, 0) <= 200 * 1024 * 1024
   and name ~ '^admission/.+/.+'
 );
 
@@ -987,7 +987,7 @@ for insert to authenticated
 with check (
   bucket_id = 'international-handbook-files'
   and (metadata->>'mimetype') in ('application/pdf')
-  and coalesce((metadata->>'size')::bigint, 0) <= 20 * 1024 * 1024
+  and coalesce((metadata->>'size')::bigint, 0) <= 200 * 1024 * 1024
   and name ~ '^international-handbook/.+/.+'
 );
 
@@ -1011,7 +1011,7 @@ for insert to anon
 with check (
   bucket_id = 'news-images'
   and (metadata->>'mimetype') in ('image/jpeg', 'image/png', 'image/webp')
-  and coalesce((metadata->>'size')::bigint, 0) <= 5 * 1024 * 1024
+  and coalesce((metadata->>'size')::bigint, 0) <= 200 * 1024 * 1024
   and name ~ '^news/.+/.+'
 );
 
@@ -1034,7 +1034,7 @@ for insert to anon
 with check (
   bucket_id = 'event-images'
   and (metadata->>'mimetype') in ('image/jpeg', 'image/png', 'image/webp')
-  and coalesce((metadata->>'size')::bigint, 0) <= 5 * 1024 * 1024
+  and coalesce((metadata->>'size')::bigint, 0) <= 200 * 1024 * 1024
   and name ~ '^events/.+/.+'
 );
 
@@ -1061,7 +1061,7 @@ with check (
     'application/msword',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
   )
-  and coalesce((metadata->>'size')::bigint, 0) <= 10 * 1024 * 1024
+  and coalesce((metadata->>'size')::bigint, 0) <= 200 * 1024 * 1024
   and name ~ '^study-plans/.+/.+'
 );
 
@@ -1084,7 +1084,7 @@ for insert to anon
 with check (
   bucket_id = 'schedule-files'
   and (metadata->>'mimetype') in ('application/pdf')
-  and coalesce((metadata->>'size')::bigint, 0) <= 10 * 1024 * 1024
+  and coalesce((metadata->>'size')::bigint, 0) <= 200 * 1024 * 1024
   and name ~ '^schedules/.+/.+'
 );
 
@@ -1107,7 +1107,7 @@ for insert to anon
 with check (
   bucket_id = 'calendar-files'
   and (metadata->>'mimetype') in ('application/pdf')
-  and coalesce((metadata->>'size')::bigint, 0) <= 10 * 1024 * 1024
+  and coalesce((metadata->>'size')::bigint, 0) <= 200 * 1024 * 1024
   and name ~ '^calendars/.+/.+'
 );
 
@@ -1130,7 +1130,7 @@ for insert to anon
 with check (
   bucket_id = 'activity-images'
   and (metadata->>'mimetype') in ('image/jpeg', 'image/png', 'image/webp')
-  and coalesce((metadata->>'size')::bigint, 0) <= 5 * 1024 * 1024
+  and coalesce((metadata->>'size')::bigint, 0) <= 200 * 1024 * 1024
   and name ~ '^activities/.+/.+'
 );
 
@@ -1153,7 +1153,7 @@ for insert to anon
 with check (
   bucket_id = 'gallery-images'
   and (metadata->>'mimetype') in ('image/jpeg', 'image/png', 'image/webp')
-  and coalesce((metadata->>'size')::bigint, 0) <= 8 * 1024 * 1024
+  and coalesce((metadata->>'size')::bigint, 0) <= 200 * 1024 * 1024
   and name ~ '^gallery/.+/.+'
 );
 
@@ -1176,7 +1176,7 @@ for insert to authenticated
 with check (
   bucket_id = 'gallery-images'
   and (metadata->>'mimetype') in ('image/jpeg', 'image/png', 'image/webp')
-  and coalesce((metadata->>'size')::bigint, 0) <= 8 * 1024 * 1024
+  and coalesce((metadata->>'size')::bigint, 0) <= 200 * 1024 * 1024
   and name ~ '^gallery/.+/.+'
 );
 
@@ -1215,7 +1215,7 @@ with check (
     'video/webm',
     'video/quicktime'
   )
-  and coalesce((metadata->>'size')::bigint, 0) <= 100 * 1024 * 1024
+  and coalesce((metadata->>'size')::bigint, 0) <= 200 * 1024 * 1024
   and name ~ '^resources/.+/.+'
 );
 
@@ -1959,7 +1959,7 @@ for insert to authenticated
 with check (
   bucket_id = 'news-images'
   and (metadata->>'mimetype') in ('image/jpeg', 'image/png', 'image/webp')
-  and coalesce((metadata->>'size')::bigint, 0) <= 5 * 1024 * 1024
+  and coalesce((metadata->>'size')::bigint, 0) <= 200 * 1024 * 1024
   and name ~ '^news/.+/.+'
 );
 
@@ -1982,7 +1982,7 @@ for insert to authenticated
 with check (
   bucket_id = 'event-images'
   and (metadata->>'mimetype') in ('image/jpeg', 'image/png', 'image/webp')
-  and coalesce((metadata->>'size')::bigint, 0) <= 5 * 1024 * 1024
+  and coalesce((metadata->>'size')::bigint, 0) <= 200 * 1024 * 1024
   and name ~ '^events/.+/.+'
 );
 
@@ -2009,7 +2009,7 @@ with check (
     'application/msword',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
   )
-  and coalesce((metadata->>'size')::bigint, 0) <= 10 * 1024 * 1024
+  and coalesce((metadata->>'size')::bigint, 0) <= 200 * 1024 * 1024
   and name ~ '^study-plans/.+/.+'
 );
 
@@ -2032,7 +2032,7 @@ for insert to authenticated
 with check (
   bucket_id = 'schedule-files'
   and (metadata->>'mimetype') in ('application/pdf')
-  and coalesce((metadata->>'size')::bigint, 0) <= 10 * 1024 * 1024
+  and coalesce((metadata->>'size')::bigint, 0) <= 200 * 1024 * 1024
   and name ~ '^schedules/.+/.+'
 );
 
@@ -2055,7 +2055,7 @@ for insert to authenticated
 with check (
   bucket_id = 'calendar-files'
   and (metadata->>'mimetype') in ('application/pdf')
-  and coalesce((metadata->>'size')::bigint, 0) <= 10 * 1024 * 1024
+  and coalesce((metadata->>'size')::bigint, 0) <= 200 * 1024 * 1024
   and name ~ '^calendars/.+/.+'
 );
 
@@ -2078,7 +2078,7 @@ for insert to authenticated
 with check (
   bucket_id = 'activity-images'
   and (metadata->>'mimetype') in ('image/jpeg', 'image/png', 'image/webp')
-  and coalesce((metadata->>'size')::bigint, 0) <= 5 * 1024 * 1024
+  and coalesce((metadata->>'size')::bigint, 0) <= 200 * 1024 * 1024
   and name ~ '^activities/.+/.+'
 );
 
@@ -2101,7 +2101,7 @@ for insert to authenticated
 with check (
   bucket_id = 'gallery-images'
   and (metadata->>'mimetype') in ('image/jpeg', 'image/png', 'image/webp')
-  and coalesce((metadata->>'size')::bigint, 0) <= 8 * 1024 * 1024
+  and coalesce((metadata->>'size')::bigint, 0) <= 200 * 1024 * 1024
   and name ~ '^gallery/.+/.+'
 );
 
@@ -2140,7 +2140,7 @@ with check (
     'video/webm',
     'video/quicktime'
   )
-  and coalesce((metadata->>'size')::bigint, 0) <= 100 * 1024 * 1024
+  and coalesce((metadata->>'size')::bigint, 0) <= 200 * 1024 * 1024
   and name ~ '^resources/.+/.+'
 );
 
@@ -2163,7 +2163,7 @@ for insert to anon
 with check (
   bucket_id = 'resources-files'
   and (metadata->>'mimetype') in ('application/pdf', 'image/jpeg', 'image/png', 'image/webp')
-  and coalesce((metadata->>'size')::bigint, 0) <= 25 * 1024 * 1024
+  and coalesce((metadata->>'size')::bigint, 0) <= 200 * 1024 * 1024
   and name ~ '^announcements/.+/.+'
 );
 
@@ -2192,7 +2192,7 @@ for insert to authenticated
 with check (
   bucket_id = 'resources-files'
   and (metadata->>'mimetype') in ('application/pdf', 'image/jpeg', 'image/png', 'image/webp')
-  and coalesce((metadata->>'size')::bigint, 0) <= 25 * 1024 * 1024
+  and coalesce((metadata->>'size')::bigint, 0) <= 200 * 1024 * 1024
   and name ~ '^announcements/.+/.+'
 );
 
@@ -2279,7 +2279,7 @@ with check (
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     'text/plain'
   )
-  and coalesce((metadata->>'size')::bigint, 0) <= 25 * 1024 * 1024
+  and coalesce((metadata->>'size')::bigint, 0) <= 200 * 1024 * 1024
   and name ~ '^academic-advising/.+/.+'
 );
 
@@ -2317,7 +2317,7 @@ with check (
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     'text/plain'
   )
-  and coalesce((metadata->>'size')::bigint, 0) <= 25 * 1024 * 1024
+  and coalesce((metadata->>'size')::bigint, 0) <= 200 * 1024 * 1024
   and name ~ '^academic-advising/.+/.+'
 );
 
