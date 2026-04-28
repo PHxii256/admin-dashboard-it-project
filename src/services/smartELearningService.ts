@@ -132,7 +132,9 @@ export async function createSmartELearningVideo(input: SmartELearningInput, sour
 
   if (error) {
     if (isMissingTable(error)) {
-      throw new Error('Smart E-Learning backend is not initialized yet. Run the SQL setup script first.');
+      throw new Error(
+        'Smart E-Learning backend is not initialized yet. Run supabase/add_smart_elearning.sql first. If the table already exists but uploads still fail, run supabase/fix_smart_elearning_backend_mismatch.sql.'
+      );
     }
     throw new Error(`Failed to create smart e-learning video: ${error.message}`);
   }
